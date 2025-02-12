@@ -2,7 +2,7 @@
 ## Neste projeto, proposto pela Compass UOL, a proposta é a criação de um servidor WEB com monitoramento automatizado.
 ### Projeto proposto a equipe do Programa de Bolsas DevSecOps e AWS de 2025
 
-Tecnologias visadas na utilização:
+#### Tecnologias visadas na utilização:
  - Instâncias EC2
  - VPC
  - Security Groups
