@@ -1,4 +1,4 @@
-#Projeto de monitoramento de site via notificação no discord
+# Projeto de monitoramento de site via notificação no discord
 
 ### Tecnologias visadas na utilização:
  - AWS Services
