@@ -51,7 +51,8 @@ Nesta parte será criada as configurações para que a página no Nginx esteja d
 ### 1º Passo:
  - Atualizar todo o sistema com < sudo apt update && sudo apt upgrade -y> (Este comando visualiza os repositorios desatualizados com os mais atuais e os atualizada imediatamente)
  - Fazer download do Nginx < sudo apt install nginx -y> (Este comando baixa a versão mais recente do Nginx)
- - Criação do arquivo .html para visualização da página <sudo cat << 'EOF'> /usr/share/nginx/html/index.html
+ - Criação do arquivo .html para visualização da página
+'sudo cat << 'EOF'> /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
 <body>
@@ -65,10 +66,11 @@ document.getElementById("hostname").innerHTML = host;
 </script>
 </body>
 </html>
-EOF> (Este comando cria um arquivo index.html dentro do diretório destinado a pagina do Nginx, sendo mostrado uma mensagem "Deu certo" e o IP público da instância)
+EOF' 
+(Este comando cria um arquivo index.html dentro do diretório destinado a pagina do Nginx, sendo mostrado uma mensagem "Deu certo" e o IP público da instância)
  - Habilitando o serviço do Nginx < sudo systemctl enable nginx --now > (Este comando serve para que o serviço do Nginx seja habilitado e iniciado)
  - Criação do arquivo de reinicialização do Nginx em caso de desligamento 
- < sudo cat > /usr/local/bin/restart_nginx.sh << 'EOF'
+'sudo cat > /usr/local/bin/restart_nginx.sh << 'EOF'
 #!/bin/bash
 
 # URL do site a ser monitorado
@@ -86,7 +88,8 @@ while true; do
     # Aguarda 10 segundos antes de verificar novamente
     sleep 10
 done
-EOF> (Este comando cria o script que será seguido para que o Nginx sejá reiniciado caso ocorra algum erro, é uma verificação via http para verificação do site em si)
+EOF' 
+(Este comando cria o script que será seguido para que o Nginx sejá reiniciado caso ocorra algum erro, é uma verificação via http para verificação do site em si)
  - Garantido as permissões de execução do restart_nginx.sh < sudo chmod +x /usr/local/bin/restart_nginx.sh > (Este comando adiciona, caso já não tenha sido adicionada, as permissões de execução do script restart_nginx.sh)
  
 
