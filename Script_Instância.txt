@@ -82,16 +82,16 @@ sudo cat > /usr/local/bin/monitor_nginx.sh << 'EOF'
 
 # Configurações
 URL="http://localhost"
-WEBHOOK_URL="https://discordapp.com/api/webhooks/1339365615537885327/8d0zeDh55_F67KaukwvNEdeJ4BJqbaTHKvXC_bpgn3bjZMsx3HA2L8XlCpqvKzQYC9bg"
+WEBHOOK_URL="https://discordapp.com/api/webhooks/"seu webhook" "
 INTERVAL=60
 LOG_FILE="/var/log/monitoramento.log"
-PREVIOUS_STATUS="unknown"  # Novo: rastrear estado anterior
+PREVIOUS_STATUS="unknown"  # rastrear estado anterior
 
-# Função para registrar logs com data e hora (CORRIGIDO)
+# Função para registrar logs com data e hora 
 log() {
     local message="$1"
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
-    echo "[$timestamp] $message" | tee -a "$LOG_FILE"  # Corrigido "messsage" para "message"
+    echo "[$timestamp] $message" | tee -a "$LOG_FILE"  
 }
 
 # Função para enviar notificação para o Discord
@@ -100,7 +100,7 @@ send_notification() {
     curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$message\"}" "$WEBHOOK_URL"
 }
 
-# Função para verificar o status do site (MODIFICADA)
+# Função para verificar o status do site
 check_site_status() {
     local response_code
     response_code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
