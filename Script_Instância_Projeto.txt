@@ -1,0 +1,157 @@
+#!/bin/bash
+# Script para automatização de criação de instância com NGINX e monitoramento do 
+# funcionamento do site
+
+# Configure repository for nginx (latest released)
+sudo sh -c 'echo "deb http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" > /etc/apt/sources.list.d/nginx.list'
+sudo sh -c 'echo "deb-src http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" >> /etc/apt/sources.list.d/nginx.list'
+wget -qO - https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+
+# Update system and install nginx
+sudo apt update && sudo apt upgrade -y && sudo apt install nginx -y 
+
+# Create sample HTML file
+sudo cat << 'EOF'> /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Deu certo!</h1>
+<h2><p id="hostname"></p></h2>
+
+<script>
+let host = location.host;
+document.getElementById("hostname").innerHTML = host;
+</script>
+</body>
+</html>
+EOF
+
+# Enable and start nginx service
+sudo systemctl enable nginx --now
+
+# Create nginx monitor script
+sudo cat > /usr/local/bin/restart_nginx.sh << 'EOF'
+#!/bin/bash
+
+# URL do site a ser monitorado
+URL="http://localhost"  # Substitua pelo endereço do seu site
+
+while true; do
+    # Faz uma requisição HTTP ao site
+    if curl --output /dev/null --silent --head --fail "$URL"; then
+        echo "Site está online: $URL"
+    else
+        echo "Site está offline: $URL"
+        # Reinicia o Nginx se o site estiver offline
+        sudo systemctl restart nginx
+    fi
+    # Aguarda 5 segundos antes de verificar novamente
+    sleep 5
+done
+EOF
+
+# Grant execute permission to the monitor script
+sudo chmod +x /usr/local/bin/restart_nginx.sh
+
+# Create a systemd service file for automatic Nginx monitoring and restart
+sudo cat > /etc/systemd/system/restart_nginx.service << 'EOF'
+[Unit]
+Description=Monitoramento e reinicialização automática do Nginx
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/restart_nginx.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Enable and start the restart_nginx service
+sudo systemctl enable restart_nginx
+sudo systemctl start restart_nginx
+
+# Create the monitor for the WEB site
+sudo cat > /usr/local/bin/monitor_nginx.sh << 'EOF'
+#!/bin/bash
+
+# Configurações
+URL="http://localhost"
+WEBHOOK_URL="https://discordapp.com/api/webhooks/1339365615537885327/8d0zeDh55_F67KaukwvNEdeJ4BJqbaTHKvXC_bpgn3bjZMsx3HA2L8XlCpqvKzQYC9bg"
+INTERVAL=60
+LOG_FILE="/var/log/monitoramento.log"
+PREVIOUS_STATUS="unknown"  # Novo: rastrear estado anterior
+
+# Função para registrar logs com data e hora (CORRIGIDO)
+log() {
+    local message="$1"
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "[$timestamp] $message" | tee -a "$LOG_FILE"  # Corrigido "messsage" para "message"
+}
+
+# Função para enviar notificação para o Discord
+send_notification() {
+    local message="$1"
+    curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$message\"}" "$WEBHOOK_URL"
+}
+
+# Função para verificar o status do site (MODIFICADA)
+check_site_status() {
+    local response_code
+    response_code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+
+    if [ "$response_code" -ne 200 ]; then
+        local message="O site $URL está offline! Código de resposta: $response_code"
+        log "$message"
+        send_notification "$message"
+        PREVIOUS_STATUS="down"  # Atualiza estado para "down"
+    else
+        log "O site $URL está online. Código de resposta: $response_code"
+        
+        # Se estava inativo anteriormente, notifica o retorno ao normal
+        if [ "$PREVIOUS_STATUS" = "down" ]; then
+            local recovery_message="\u2705 O site $URL voltou ao funcionamento normal! Código: $response_code"
+            log "$recovery_message"
+            send_notification "$recovery_message"
+        fi
+        
+        PREVIOUS_STATUS="up"  # Atualiza estado para "up"
+    fi
+}
+
+# Loop de monitoramento
+while true; do
+    check_site_status
+    sleep "$INTERVAL"
+done
+EOF
+
+# Grant execute permission to the monitor script
+sudo chmod +x /usr/local/bin/monitor_nginx.sh
+
+# Create a systemd service file for monitoring
+sudo cat > /etc/systemd/system/monitor_nginx.service << 'EOF'
+[Unit]
+Description=Monitoramento do Nginx com notificações Discord
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/monitor_nginx.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Enable and start the monitor_nginx service
+sudo systemctl enable monitor_nginx
+sudo systemctl start monitor_nginx
