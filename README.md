@@ -15,11 +15,12 @@
  - Telegram,Discord ou Slack para recebimento de aviso com
 relação a mal funcionamento ou parada do site
  - Git/GitHub para documentação e anotação do processo e seu andamento
+ - Claude/BlackBox AI/ChatGPT/Gemini/Copilot/DeepSeek para validação de codigo em bash
 
 ### Criação de VPC 
-A criação da VPC não demonstrou tamanha dificuldade após a orientação fornecida pelo nosso instrutor pudemos seguir sem muitas dificuldades. Em sua criação foi prefirivel ser criado uma VPC com poucos IPs disponiveis, apenas para utilização neste projeto, um VPC com mascara /24, mas isso foi em relação a este caso em especifico
+Em sua criação foi prefirivel ser criado uma VPC com poucos IPs disponiveis, apenas para utilização neste projeto, um VPC com mascara /24, mas isso foi em relação a este caso em especifico
 
-Criamos a VPC com 2 Subnets privadas e 2 Subnets públicas e 1 internet gateway, buscado a utilização de 2 zonas de acessibilidade (Availability zones) como padrão.Foi criado tudo de uma vez para poupar tempo em relação as configurações de route tables.
+Criamos a VPC com 2 Subnets privadas e 2 Subnets públicas e 1 internet gateway, buscado a utilização de 2 zonas de acessibilidade (Availability zones) como padrão. Foi criado tudo de uma vez para poupar tempo em relação as configurações de route tables.
 
 Finalizada a criação da VPC e suas configurações, a atenção agora é dada a instância EC2 
 
@@ -48,8 +49,8 @@ Ao acessar a máquina via SSH ele pede confirmação e apenas aceito digitando "
 
 Nesta parte será criada as configurações para que a página no Nginx esteja dispónivel, funcionando e tendo seu monitoramento e reiniciamento bem configurados.
 
-### 1º Passo:
- - Atualizar todo o sistema com < ` sudo apt update && sudo apt upgrade -y `> (Este comando visualiza os repositorios desatualizados com os mais atuais e os atualizada imediatamente)
+### Passo a Passo:
+ - Atualizar todo o sistema com < ` sudo apt update && sudo apt upgrade -y `> (Este comando visualiza os repositorios desatualizados e compara com os mais atuais disponiveis e os atualiza imediatamente)
  - Fazer download do Nginx < ` sudo apt install nginx -y ` > (Este comando baixa a versão mais recente do Nginx)
  - Criação do arquivo .html para visualização da página
 ```
@@ -93,8 +94,106 @@ while true; do
 done
 EOF
 ~~~
-(Este comando cria o script que será seguido para que o Nginx sejá reiniciado caso ocorra algum erro, é uma verificação via http para verificação do site em si)
- - Garantido as permissões de execução do restart_nginx.sh < ` sudo chmod +x /usr/local/bin/restart_nginx.sh  `> (Este comando adiciona, caso já não tenha sido adicionada, as permissões de execução do script restart_nginx.sh)
- 
+(Este comando cria o script que será seguido para que o Nginx sejá reiniciado caso ocorra algum erro, é uma verificação via http para verificação do site do nginx, mas para não ter que fazer uma busca do proprio ip da máquina, preferi deixar o endereço como localhost, que funciona tão bem quanto)
+ - Garantindo as permissões de execução do restart_nginx.sh < ` sudo chmod +x /usr/local/bin/restart_nginx.sh  `> (Este comando adiciona, caso já não tenha sido adicionada, as permissões de execução do script restart_nginx.sh)
+ - Após fornecer as permissões, iremos colocar este script como um serviço do systemd, para que possa ser executado sempre que for iniciada a instância, para isso teremos quecriar um arquivo de serviço deste script, este arquivo segue a extensão .service:
+ ~~~
+sudo cat > /etc/systemd/system/restart_nginx.service << 'EOF'
+[Unit]
+Description=Monitoramento e reinicialização automática do Nginx
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/restart_nginx.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+~~~
+(Este bloco de codigo fará a criação do arquivo .service que fará a reinicialização do Nginx sempre que o serviço de paginas web cair, algumas informações importantes são referentes as configurações colocadas, como visto a cima no bloco [Service] o script será sempre reiniciado ao ligar a instância e será executado como root)
+ - Nesta parte iremos ter que fazer uma reinicialização do daemon do sistema para que as aplicações de serviço sejam salvas ` sudo systemctl daemon-reload ` e logo em seguida devemos habilitar o serviço e inicializa-lo ` sudo systemctl enable restart_nginx ` e `sudo systemctl start restart_nginx `
+ - Neste momento iremos criar o monitor do Nginx, que fára o monitoramento e o envio de notificações para o webhook, no discord:
+~~~
+sudo cat > /usr/local/bin/monitor_nginx.sh << 'EOF'
+#!/bin/bash
+
+# Configurações
+URL="http://localhost"
+WEBHOOK_URL="https://discordapp.com/api/webhooks/"seu_webhook""
+INTERVAL=60
+LOG_FILE="/var/log/monitoramento.log"
+PREVIOUS_STATUS="unknown"  # rastrear estado anterior
+
+# Função para registrar logs com data e hora 
+log() {
+    local message="$1"
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "[$timestamp] $message" | tee -a "$LOG_FILE"  
+}
+
+# Função para enviar notificação para o Discord
+send_notification() {
+    local message="$1"
+    curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$message\"}" "$WEBHOOK_URL"
+}
+
+# Função para verificar o status do site 
+check_site_status() {
+    local response_code
+    response_code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+
+    if [ "$response_code" -ne 200 ]; then
+        local message="O site $URL está offline! Código de resposta: $response_code"
+        log "$message"
+        send_notification "$message"
+        PREVIOUS_STATUS="down"  # Atualiza estado para "down"
+    else
+        log "O site $URL está online. Código de resposta: $response_code"
+        
+        # Se estava inativo anteriormente, notifica o retorno ao normal
+        if [ "$PREVIOUS_STATUS" = "down" ]; then
+            local recovery_message="\u2705 O site $URL voltou ao funcionamento normal! Código: $response_code"
+            log "$recovery_message"
+            send_notification "$recovery_message"
+        fi
+        
+        PREVIOUS_STATUS="up"  # Atualiza estado para "up"
+    fi
+}
+
+# Loop de monitoramento
+while true; do
+    check_site_status
+    sleep "$INTERVAL"
+done
+EOF
+~~~
+(Este código ele cria o arquivo .sh do monitor do site disposto no Nginx fazendo a requisição via http atráves do url localhost. Colocamos o endereço do webhook na variavel correspondente, substituindo "seu webhook" pelo seu codigo do webhook. Criamos a váriavel intervalo para que o codigo que ficará rodando em loop não faça a verificação a todo momento consumindo assim demasiado poder computacional da instância EC2, colocamos também como variavel o caminho absoluto até a pasta /log que onde teremos salvo o monitoramento.log onde ficará salvo os dados de minuto em minuto do funcionamento do site.
+A função log cria uma variavel que sevira como base para a mensagem a ser registrada no .log tendo a data com ano, mês, dia, hora, minuto e segundo.
+A função send_notification é a que fará o envio da notificação ao servidor discord via webhook, a função em resumo faz uma requisição ao endereço do webhook e posta uma mensagem no mesmo.
+A função de verificação do site (check_site_status) ela faz uma requisição ao site e verifica se o codigo http recebido é igual a 200 fazendo também a verificação do estado anterior do site, para que não haja a notificação constante mesmo do site estando online, tal verificação de estado antior é feita utilizando a variavel PREVIOUS_STATE que é atualizada em determinados pontos dos if else.
+Por fim temos o loop do monitoramento onde ficara rodando a função check_site_status e após a sua execução ocorrerá o intervalo de 60 segundos.)
+ - Finaizando a configuração do .sh temos que adicionar as permissões de execução, para garantir que ele seja executado da maneira que queremos `sudo chmod +x /usr/local/bin/monitor_nginx.sh`
+ - Também, precisamos criar o arquivo .service para que o monitor tenha privelegios de execução como root e que seja reiniciado sempre que a instância for reiniciada:
+~~~
+sudo cat > /etc/systemd/system/monitor_nginx.service << 'EOF'
+[Unit]
+Description=Monitoramento do Nginx com notificações Discord
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/monitor_nginx.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+~~~
+(As configurações são iguais ao do reinicializador do Nginx, mudando apenas o nome do script no ExecStart)
+ - 
+
 
 
