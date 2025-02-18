@@ -1,19 +1,18 @@
 # Projeto de monitoramento de site via notificação no discord
-
 ### Tecnologias visadas na utilização:
  - AWS Services
  - Instâncias EC2
  - VPC
  - Security Groups
+ - Script User Data 
  - NGinx como gerenciador de página WEB
  - Linguagem de Marcação de Hipertexto (HTML)
- - Linux
+ - Linux Ubuntu 
  - Conexão SSH
- - Protocolo HTTP
- - Script em Bash ou Python
- - CRON
- - Telegram,Discord ou Slack para recebimento de aviso com
-relação a mal funcionamento ou parada do site
+ - Protocolo HTTP para requisição do funcionamento do site
+ - Script em Bash
+ - Systemd
+ - Discord para recebimento de aviso com relação a mal funcionamento ou parada do site
  - Git/GitHub para documentação e anotação do processo e seu andamento
  - Claude/BlackBox AI/ChatGPT/Gemini/Copilot/DeepSeek para validação de codigo em bash
 
@@ -193,7 +192,7 @@ WantedBy=multi-user.target
 EOF
 ~~~
 (As configurações são iguais ao do reinicializador do Nginx, mudando apenas o nome do script no ExecStart)
- - 
+ - Após finalizado a configuração do arquivo .service precisaremos apenas reiniciar novamente o daemon do sistema para que as configurações novas sejam aplicadas e salvas `sudo systemctl daemon-reload` e logo em seguida habilitar e iniciar o monitor `sudo systemctl enable monitor_nginx` e `sudo systemctl start monitor_nginx`
 
 
 
