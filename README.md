@@ -1,4 +1,5 @@
 # Projeto de monitoramento de site via notificação no discord
+---------------
 ### Tecnologias visadas na utilização:
  - AWS Services
  - Instâncias EC2
@@ -193,6 +194,39 @@ EOF
 ~~~
 (As configurações são iguais ao do reinicializador do Nginx, mudando apenas o nome do script no ExecStart)
  - Após finalizado a configuração do arquivo .service precisaremos apenas reiniciar novamente o daemon do sistema para que as configurações novas sejam aplicadas e salvas `sudo systemctl daemon-reload` e logo em seguida habilitar e iniciar o monitor `sudo systemctl enable monitor_nginx` e `sudo systemctl start monitor_nginx`
+
+### Validação do script
+
+Essa parte da validação é feita via conexão SSH com a instância EC2
+
+Para validar todos os comando anteriormente inseridos, você pode ir acessando cada uma das pastas para ver se os arquivos foram corretamente inseridos e caso esteja tudo certo você poderá testar se estão sendo executados corretamente, primeiro teste o reinicializador do Nginx com o comando `systemctl stop nginx` e logo em seguida utilize o comando `service --status-all` verifique se o sinal ao lado do Nginx se encontra sendo [-] ou [+] em caso do sinal ser [-] aguarde alguns segundos e verifique novamente, em caso de não haver a mudança para o sinal [+] há algum problema no código do reinicializador, caso a mudança tenha ocorrido corretamente sigamos para a próxima verificação.
+
+![Documentação2](https://github.com/user-attachments/assets/ddc992fe-8987-4056-acae-13ed91db8531)
+
+![Documentação3](https://github.com/user-attachments/assets/4d7f2491-5ab6-4f94-82a5-3436e7f95846)
+
+
+Agora que o reinicializador já foi devidamente testado e se encontra em funcionamento pleno vamos testar a notificação no servidor discord e o registro dos logs na pasta /var/log/ no arquivo monitoramento.log ou o arquivo que você tiver configurado. Verifique se a verificação ocorre de 1 em 1 minuto e se apresenta a mensagem que foi configurada para aparecer de maneira correta, após isso iremos finalizar os processos do reinicializador e do próprio Nginx usando os comandos `systemctl stop restart_nginx` e `systemctl stop nginx`, após feito isso aguardemos alguns segundos e verificamos nosso servidor discord para averiguarmos se a notificação foi devidamente enviada e se aparece como havia sido anteriormente configurada.
+
+![Documentação4](https://github.com/user-attachments/assets/6e25337c-8fd9-4439-acb2-056b047267e6)
+
+![Documentação5](https://github.com/user-attachments/assets/d1d7cf3b-6142-4a5a-951a-2605b5d7af8d)
+
+![Documentação6](https://github.com/user-attachments/assets/8ef1af06-393b-46f9-89da-8b83a4f13cb6)
+
+---------
+para voltar ao monitoramento normal, podemos simplesmente reiniciar o reinicializador do Nginx com o comando `systemctl restart restart_gninx`
+
+![Documentação7](https://github.com/user-attachments/assets/aaae2b4f-a206-4592-8289-614279658d9e)
+
+![Documentação8](https://github.com/user-attachments/assets/6d90e916-b759-4a0f-9241-b34ba545fd8d)
+
+
+Essa parte da verificação é feita fora da instância EC2
+
+Uma validação simples que podemos fazer também é verificar se ao colocarmos o ip da instância teremos acesso a página em HTML que haviamos configurado e criado, em caso de não ocorrer essas apresentação o erro pode ter relação com a VPC criada, com o Security Group configurado ou com o próprio Nginx.
+
+![Documentação9](https://github.com/user-attachments/assets/85a1249e-e4c9-4ec4-8e87-843c3c8917ae)
 
 
 
