@@ -1,11 +1,11 @@
 # Projeto de monitoramento de site via notificação no discord
----------------
+
 ### Tecnologias visadas na utilização:
  - AWS Services
  - Instâncias EC2
  - VPC
  - Security Groups
- - Script User Data 
+ - [User Data Script](https://github.com/Belmonte512/Projeto_Monitoramento/blob/main/Script_Inst%C3%A2ncia.txt)
  - NGinx como gerenciador de página WEB
  - Linguagem de Marcação de Hipertexto (HTML)
  - Linux Ubuntu 
@@ -53,7 +53,7 @@ Nesta parte será criada as configurações para que a página no Nginx esteja d
  - Atualizar todo o sistema com < ` sudo apt update && sudo apt upgrade -y `> (Este comando visualiza os repositorios desatualizados e compara com os mais atuais disponiveis e os atualiza imediatamente)
  - Fazer download do Nginx < ` sudo apt install nginx -y ` > (Este comando baixa a versão mais recente do Nginx)
  - Criação do arquivo .html para visualização da página
-```
+```bash
 sudo cat << 'EOF'> /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
@@ -73,7 +73,7 @@ EOF
 (Este comando cria um arquivo index.html dentro do diretório destinado a pagina do Nginx, sendo mostrado uma mensagem "Deu certo" e o IP público da instância)
  - Habilitando o serviço do Nginx < ` sudo systemctl enable nginx --now ` > (Este comando serve para que o serviço do Nginx seja habilitado e iniciado)
  - Criação do arquivo de reinicialização do Nginx em caso de desligamento 
-~~~
+~~~bash
 sudo cat > /usr/local/bin/restart_nginx.sh << 'EOF'
 #!/bin/bash
 
@@ -97,7 +97,7 @@ EOF
 (Este comando cria o script que será seguido para que o Nginx sejá reiniciado caso ocorra algum erro, é uma verificação via http para verificação do site do nginx, mas para não ter que fazer uma busca do proprio ip da máquina, preferi deixar o endereço como localhost, que funciona tão bem quanto)
  - Garantindo as permissões de execução do restart_nginx.sh < ` sudo chmod +x /usr/local/bin/restart_nginx.sh  `> (Este comando adiciona, caso já não tenha sido adicionada, as permissões de execução do script restart_nginx.sh)
  - Após fornecer as permissões, iremos colocar este script como um serviço do systemd, para que possa ser executado sempre que for iniciada a instância, para isso teremos quecriar um arquivo de serviço deste script, este arquivo segue a extensão .service:
- ~~~
+ ~~~bash
 sudo cat > /etc/systemd/system/restart_nginx.service << 'EOF'
 [Unit]
 Description=Monitoramento e reinicialização automática do Nginx
@@ -115,7 +115,7 @@ EOF
 (Este bloco de codigo fará a criação do arquivo .service que fará a reinicialização do Nginx sempre que o serviço de paginas web cair, algumas informações importantes são referentes as configurações colocadas, como visto a cima no bloco [Service] o script será sempre reiniciado ao ligar a instância e será executado como root)
  - Nesta parte iremos ter que fazer uma reinicialização do daemon do sistema para que as aplicações de serviço sejam salvas ` sudo systemctl daemon-reload ` e logo em seguida devemos habilitar o serviço e inicializa-lo ` sudo systemctl enable restart_nginx ` e `sudo systemctl start restart_nginx `
  - Neste momento iremos criar o monitor do Nginx, que fára o monitoramento e o envio de notificações para o webhook, no discord:
-~~~
+~~~bash
 sudo cat > /usr/local/bin/monitor_nginx.sh << 'EOF'
 #!/bin/bash
 
@@ -177,7 +177,7 @@ A função de verificação do site (check_site_status) ela faz uma requisição
 Por fim temos o loop do monitoramento onde ficara rodando a função check_site_status e após a sua execução ocorrerá o intervalo de 60 segundos.)
  - Finaizando a configuração do .sh temos que adicionar as permissões de execução, para garantir que ele seja executado da maneira que queremos `sudo chmod +x /usr/local/bin/monitor_nginx.sh`
  - Também, precisamos criar o arquivo .service para que o monitor tenha privelegios de execução como root e que seja reiniciado sempre que a instância for reiniciada:
-~~~
+~~~bash
 sudo cat > /etc/systemd/system/monitor_nginx.service << 'EOF'
 [Unit]
 Description=Monitoramento do Nginx com notificações Discord
@@ -203,24 +203,37 @@ Para validar todos os comando anteriormente inseridos, você pode ir acessando c
 
 ![Documentação2](https://github.com/user-attachments/assets/ddc992fe-8987-4056-acae-13ed91db8531)
 
+---------
+
 ![Documentação3](https://github.com/user-attachments/assets/4d7f2491-5ab6-4f94-82a5-3436e7f95846)
 
+---------
 
 Agora que o reinicializador já foi devidamente testado e se encontra em funcionamento pleno vamos testar a notificação no servidor discord e o registro dos logs na pasta /var/log/ no arquivo monitoramento.log ou o arquivo que você tiver configurado. Verifique se a verificação ocorre de 1 em 1 minuto e se apresenta a mensagem que foi configurada para aparecer de maneira correta, após isso iremos finalizar os processos do reinicializador e do próprio Nginx usando os comandos `systemctl stop restart_nginx` e `systemctl stop nginx`, após feito isso aguardemos alguns segundos e verificamos nosso servidor discord para averiguarmos se a notificação foi devidamente enviada e se aparece como havia sido anteriormente configurada.
 
+
+
 ![Documentação4](https://github.com/user-attachments/assets/6e25337c-8fd9-4439-acb2-056b047267e6)
 
+---------
+
 ![Documentação5](https://github.com/user-attachments/assets/d1d7cf3b-6142-4a5a-951a-2605b5d7af8d)
+
+---------
 
 ![Documentação6](https://github.com/user-attachments/assets/8ef1af06-393b-46f9-89da-8b83a4f13cb6)
 
 ---------
+
 para voltar ao monitoramento normal, podemos simplesmente reiniciar o reinicializador do Nginx com o comando `systemctl restart restart_gninx`
 
 ![Documentação7](https://github.com/user-attachments/assets/aaae2b4f-a206-4592-8289-614279658d9e)
 
+---------
+
 ![Documentação8](https://github.com/user-attachments/assets/6d90e916-b759-4a0f-9241-b34ba545fd8d)
 
+---------
 
 Essa parte da verificação é feita fora da instância EC2
 
