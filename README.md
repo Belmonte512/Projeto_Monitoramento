@@ -44,13 +44,19 @@ Utilizando o comando <ssh -i "minha_chave.pem" ubuntu@ec2-"minha instância"> pa
 
 ### Acessando a Instãncia
 
-Ao acessar a máquina via SSH ele pede confirmação e apenas aceito digitando "yes" e assim já esotu dentro da máquina.
+Ao acessar a máquina via SSH ele pede confirmação e apenas aceito digitando "yes" e assim já estou dentro da máquina e podendo subir meu usuario para root com o comando `sudo su`.
 
 ### Configurando a instância
 
 Nesta parte será criada as configurações para que a página no Nginx esteja dispónivel, funcionando e tendo seu monitoramento e reiniciamento bem configurados.
 
 ### Passo a Passo:
+ - Adicionar os repostorios oficiais e a chave de acesso a essses repostiorios para ter acesso as versões mais recentes do Nginx, ao invés de utilizar os repositórios padrões do Ubuntu:
+```
+sudo sh -c 'echo "deb http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" > /etc/apt/sources.list.d/nginx.list'
+sudo sh -c 'echo "deb-src http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" >> /etc/apt/sources.list.d/nginx.list'
+wget -qO - https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+```
  - Atualizar todo o sistema com < ` sudo apt update && sudo apt upgrade -y `> (Este comando visualiza os repositorios desatualizados e compara com os mais atuais disponiveis e os atualiza imediatamente)
  - Fazer download do Nginx < ` sudo apt install nginx -y ` > (Este comando baixa a versão mais recente do Nginx)
  - Criação do arquivo .html para visualização da página
