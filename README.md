@@ -10,6 +10,7 @@
  - Linguagem de Marcação de Hipertexto (HTML)
  - Linux Ubuntu 
  - Conexão SSH
+ - Terminal Bash para conexão SSH
  - Protocolo HTTP para requisição do funcionamento do site
  - Script em Bash
  - Systemd
