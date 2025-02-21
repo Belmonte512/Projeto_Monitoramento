@@ -242,5 +242,171 @@ Uma validação simples que podemos fazer também é verificar se ao colocarmos 
 
 ![Documentação9](https://github.com/user-attachments/assets/85a1249e-e4c9-4ec4-8e87-843c3c8917ae)
 
+### User Data
+
+Após a instação do servidor do Nginx e seus serviços de monitoramento e reinicializador, iremos criar o user data para automatizar a criação do servidor Nginx, com a página já criada e todos os scripts pré alocados e estruturados da maneira correta, parece comprexo mas será basicamente a criação de um script em Bash que terá a colocação de todos os comandos e scripts citados e apresentados anteriormente juntamente com a ordenação correta de cada um.
+
+segue abaixo do User Data completo, comentado (dentro dos scripts em Português e fora dos scripts em Inglês) e rodando:
+
+```
+#!/bin/bash
+# Script para automatização de criação de instância com NGINX e monitoramento do 
+# funcionamento do site
+
+# Configure repository for nginx (latest released)
+sudo sh -c 'echo "deb http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" > /etc/apt/sources.list.d/nginx.list'
+sudo sh -c 'echo "deb-src http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" >> /etc/apt/sources.list.d/nginx.list'
+wget -qO - https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+
+# Update system and install nginx
+sudo apt update && sudo apt upgrade -y && sudo apt install nginx -y 
+
+# Create sample HTML file
+sudo cat << 'EOF'> /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Deu certo!</h1>
+<h2><p id="hostname"></p></h2>
+
+<script>
+let host = location.host;
+document.getElementById("hostname").innerHTML = host;
+</script>
+</body>
+</html>
+EOF
+
+# Enable and start nginx service
+sudo systemctl enable nginx --now
+
+# Create nginx monitor script
+sudo cat > /usr/local/bin/restart_nginx.sh << 'EOF'
+#!/bin/bash
+
+# URL do site a ser monitorado
+URL="http://localhost"  # Substitua pelo endereço do seu site
+
+while true; do
+    # Faz uma requisição HTTP ao site
+    if curl --output /dev/null --silent --head --fail "$URL"; then
+        echo "Site está online: $URL"
+    else
+        echo "Site está offline: $URL"
+        # Reinicia o Nginx se o site estiver offline
+        sudo systemctl restart nginx
+    fi
+    # Aguarda 5 segundos antes de verificar novamente
+    sleep 5
+done
+EOF
+
+# Grant execute permission to the monitor script
+sudo chmod +x /usr/local/bin/restart_nginx.sh
+
+# Create a systemd service file for automatic Nginx monitoring and restart
+sudo cat > /etc/systemd/system/restart_nginx.service << 'EOF'
+[Unit]
+Description=Monitoramento e reinicialização automática do Nginx
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/restart_nginx.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Enable and start the restart_nginx service
+sudo systemctl enable restart_nginx
+sudo systemctl start restart_nginx
+
+# Create the monitor for the WEB site
+sudo cat > /usr/local/bin/monitor_nginx.sh << 'EOF'
+#!/bin/bash
+
+# Configurações
+URL="http://localhost"
+WEBHOOK_URL="https://discordapp.com/api/webhooks/"seu webhook" "
+INTERVAL=60
+LOG_FILE="/var/log/monitoramento.log"
+PREVIOUS_STATUS="unknown"  # rastrear estado anterior
+
+# Função para registrar logs com data e hora 
+log() {
+    local message="$1"
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "[$timestamp] $message" | tee -a "$LOG_FILE"  
+}
+
+# Função para enviar notificação para o Discord
+send_notification() {
+    local message="$1"
+    curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$message\"}" "$WEBHOOK_URL"
+}
+
+# Função para verificar o status do site
+check_site_status() {
+    local response_code
+    response_code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+
+    if [ "$response_code" -ne 200 ]; then
+        local message="O site $URL está offline! Código de resposta: $response_code"
+        log "$message"
+        send_notification "$message"
+        PREVIOUS_STATUS="down"  # Atualiza estado para "down"
+    else
+        log "O site $URL está online. Código de resposta: $response_code"
+        
+        # Se estava inativo anteriormente, notifica o retorno ao normal
+        if [ "$PREVIOUS_STATUS" = "down" ]; then
+            local recovery_message="\u2705 O site $URL voltou ao funcionamento normal! Código: $response_code"
+            log "$recovery_message"
+            send_notification "$recovery_message"
+        fi
+        
+        PREVIOUS_STATUS="up"  # Atualiza estado para "up"
+    fi
+}
+
+# Loop de monitoramento
+while true; do
+    check_site_status
+    sleep "$INTERVAL"
+done
+EOF
+
+# Grant execute permission to the monitor script
+sudo chmod +x /usr/local/bin/monitor_nginx.sh
+
+# Create a systemd service file for monitoring
+sudo cat > /etc/systemd/system/monitor_nginx.service << 'EOF'
+[Unit]
+Description=Monitoramento do Nginx com notificações Discord
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/monitor_nginx.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Enable and start the monitor_nginx service
+sudo systemctl enable monitor_nginx
+sudo systemctl start monitor_nginx
+```
+
 
 
