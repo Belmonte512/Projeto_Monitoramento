@@ -14,7 +14,7 @@
  - Protocolo HTTP para requisição do funcionamento do site
  - Script em Bash
  - Systemd
- - [Discord para recebimento de aviso com relação a mal funcionamento ou parada do site](https://support.discord.com/hc/pt-br/articles/228383668-Usando-Webhooks)
+ - [Discord para recebimento de aviso com relação a mal funcionamento ou parada do site (WebHook)](https://support.discord.com/hc/pt-br/articles/228383668-Usando-Webhooks)
  - Git/GitHub para documentação e anotação do processo e seu andamento
  - Claude/BlackBox AI/ChatGPT/Gemini/Copilot/DeepSeek para validação de codigo em bash
 
@@ -328,7 +328,7 @@ EOF
 ~~~
 (Este bloco de codigo fará a criação do arquivo .service que fará a reinicialização do Nginx sempre que o serviço de paginas web cair, algumas informações importantes são referentes as configurações colocadas, como visto a cima no bloco [Service] o script será sempre reiniciado ao ligar a instância e será executado como root)
  - Nesta parte iremos ter que fazer uma reinicialização do daemon do sistema para que as aplicações de serviço sejam salvas ` sudo systemctl daemon-reload ` e logo em seguida devemos habilitar o serviço e inicializa-lo ` sudo systemctl enable restart_nginx ` e `sudo systemctl start restart_nginx `
- - Neste momento iremos criar o monitor do Nginx, que fára o monitoramento e o envio de notificações para o webhook, no discord:
+ - Neste momento iremos criar o monitor do Nginx, que fára o monitoramento e o envio de notificações para o [webhook](https://support.discord.com/hc/pt-br/articles/228383668-Usando-Webhooks), no discord:
 ~~~bash
 sudo cat > /usr/local/bin/monitor_nginx.sh << 'EOF'
 #!/bin/bash
