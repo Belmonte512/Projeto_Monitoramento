@@ -63,19 +63,215 @@ wget -qO - https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
 ```bash
 sudo cat << 'EOF'> /usr/share/nginx/html/index.html
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Site</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --text-color: #2c3e50;
+            --background-color: #ecf0f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            animation: pulse 2s infinite;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            background-color: #2980b9;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            border-top: 1px solid #ddd;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
 <body>
+    <header>
+        <div class="container header-content">
+            <h1>Deu certo!</h1>
+            <p>Seu site está funcionando perfeitamente</p>
+        </div>
+    </header>
 
-<h1>Deu certo!</h1>
-<h2><p id="hostname"></p></h2>
+    <main class="container">
+        <div class="info-card">
+            <h2>Informações do Host</h2>
+            <div class="status">
+                <div class="status-indicator"></div>
+                <p id="hostname">Carregando...</p>
+            </div>
+            <button class="button" onclick="copyHostname()">Copiar Hostname</button>
+        </div>
 
-<script>
-let host = location.host;
-document.getElementById("hostname").innerHTML = host;
-</script>
+        <div class="info-card">
+            <h2>Informações Adicionais</h2>
+            <p id="browserInfo">Carregando informações do navegador...</p>
+            <p id="datetime">Carregando data e hora...</p>
+        </div>
+    </main>
+
+    <footer class="container">
+        <p>© <span id="year"></span> - Todos os direitos reservados</p>
+    </footer>
+
+    <script>
+        // Função para atualizar o hostname
+        function updateHostname() {
+            let host = location.host || 'Localhost';
+            document.getElementById("hostname").innerHTML = host;
+        }
+
+        // Função para copiar o hostname
+        function copyHostname() {
+            const hostname = document.getElementById("hostname").textContent;
+            navigator.clipboard.writeText(hostname)
+                .then(() => alert('Hostname copiado com sucesso!'))
+                .catch(err => console.error('Erro ao copiar:', err));
+        }
+
+        // Função para atualizar informações do navegador
+        function updateBrowserInfo() {
+            const browserInfo = `
+                Navegador: ${navigator.userAgent.split(')')[0]})
+                Idioma: ${navigator.language}
+                Plataforma: ${navigator.platform}
+            `;
+            document.getElementById("browserInfo").textContent = browserInfo;
+        }
+
+        // Função para atualizar data e hora
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById("datetime").textContent = now.toLocaleDateString('pt-BR', options);
+        }
+
+        // Atualizar o ano no footer
+        document.getElementById("year").textContent = new Date().getFullYear();
+
+        // Inicializar todas as informações
+        updateHostname();
+        updateBrowserInfo();
+        updateDateTime();
+
+        // Atualizar o datetime a cada segundo
+        setInterval(updateDateTime, 1000);
+    </script>
 </body>
 </html>
 EOF
+
 ```
 (Este comando cria um arquivo index.html dentro do diretório destinado a pagina do Nginx, sendo mostrado uma mensagem "Deu certo" e o IP público da instância)
  - Habilitando o serviço do Nginx < ` sudo systemctl enable nginx --now ` > (Este comando serve para que o serviço do Nginx seja habilitado e iniciado)
@@ -246,7 +442,7 @@ Essa parte da verificação é feita fora da instância EC2
 
 Uma validação simples que podemos fazer também é verificar se ao colocarmos o ip da instância teremos acesso a página em HTML que haviamos configurado e criado, em caso de não ocorrer essas apresentação o erro pode ter relação com a VPC criada, com o Security Group configurado ou com o próprio Nginx.
 
-![Documentação9](https://github.com/user-attachments/assets/85a1249e-e4c9-4ec4-8e87-843c3c8917ae)
+![Documentação10](https://github.com/user-attachments/assets/afb4ced7-c294-4ee8-9b1e-6678435cf07e)
 
 ### User Data
 
