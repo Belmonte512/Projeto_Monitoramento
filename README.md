@@ -440,7 +440,7 @@ para voltar ao monitoramento normal, podemos simplesmente reiniciar o reiniciali
 
 Essa parte da verificação é feita fora da instância EC2
 
-Uma validação simples que podemos fazer também é verificar se ao colocarmos o ip da instância teremos acesso a página em HTML que haviamos configurado e criado, em caso de não ocorrer essas apresentação o erro pode ter relação com a VPC criada, com o Security Group configurado ou com o próprio Nginx.
+Uma validação simples que podemos fazer também é verificar se ao colocarmos o ip da instância teremos acesso a página em HTML que haviamos configurado e criado, em caso de não ocorrer essas apresentação o erro pode ter relação com a VPC criada, com o Security Group configurado , com a EC2 ou com o próprio Nginx. Para corrigir a parte da VPC analise a estrutura da VPC se está configurada corretamente, verifique se você liberou acesso para o seu IP corretamente no Security Group e a EC2 análise se ela está com acesso a internete e por ultimo verifique se em algum momento os comandos não foram executados corretamente ou sairam com algum erro que não foi visto ou apresentando nesta documentação.
 
 ![Documentação10](https://github.com/user-attachments/assets/afb4ced7-c294-4ee8-9b1e-6678435cf07e)
 
@@ -609,6 +609,16 @@ sudo systemctl daemon-reload
 sudo systemctl enable monitor_nginx
 sudo systemctl start monitor_nginx
 ```
+
+### Conclusão
+Em conclusão, podemos verificar que a automação via User Data polpa demasiado tempo em relação a criação dos arquivos, instalação dos softwares e até mesmo na parte de ataualização, reinicialização, habilitação e inicilização dos serviços, pacotes e até mesmo o próprio sistema, no demais houverá algumas dificuldades enfrentadas com relação a conectividade e com o uso ao user data, erros de comando mal interpretado ou mal configurado mas em contrapartida o restante foi demasiadamente tranquilo e sem muitas complicações, na verdade tendo nenhuma complicação nas demais partes.
+
+
+
+
+
+
+
 
 
 
