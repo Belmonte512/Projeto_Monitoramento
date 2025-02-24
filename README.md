@@ -14,7 +14,7 @@
  - Protocolo HTTP para requisição do funcionamento do site
  - Script em Bash
  - Systemd
- - Discord para recebimento de aviso com relação a mal funcionamento ou parada do site
+ - [Discord para recebimento de aviso com relação a mal funcionamento ou parada do site](https://support.discord.com/hc/pt-br/articles/228383668-Usando-Webhooks)
  - Git/GitHub para documentação e anotação do processo e seu andamento
  - Claude/BlackBox AI/ChatGPT/Gemini/Copilot/DeepSeek para validação de codigo em bash
 
@@ -23,7 +23,19 @@ Em sua criação foi prefirivel ser criado uma VPC com poucos IPs disponiveis, a
 
 Criamos a VPC com 2 Subnets privadas e 2 Subnets públicas e 1 internet gateway, buscado a utilização de 2 zonas de acessibilidade (Availability zones) como padrão. Foi criado tudo de uma vez para poupar tempo em relação as configurações de route tables.
 
-Finalizada a criação da VPC e suas configurações, a atenção agora é dada a instância EC2 
+![image](https://github.com/user-attachments/assets/5f211e87-760a-44ad-8bbe-8c000d0734a3)
+
+Finalizada a criação da VPC e suas configurações, a atenção agora é dada ao Security Group
+
+### Criação do Security Group
+
+O Security group deverá ser cridao tendo nas regras de inbound permissões para o acesso via SSH e HTTP apenas para o seu IP. Já na regra de saida (outbound) preferi manter any to any para maior acesso, mas deixo a observação de não seguir o exemplo e buscar ter maior controle das suas regras de saida. OBS: O security group foi criado no momento de criação da instância, mas nada impedia de ter sido criado antes e previamente configurado.
+
+![Documentação11](https://github.com/user-attachments/assets/0020fe19-53aa-4942-8825-64f3e64ab951)
+
+![Documentação12](https://github.com/user-attachments/assets/ae25b10f-6b75-4d79-8c34-ee3f14201983)
+
+**Note que a própria AWS alerta sobre o uso de uma regrade saida Any to Any**
 
 ### Criação da Instância EC2 
 A criação da Instância EC2 não teve muito segredo, foi criada um instância com uma AMI Ubuntu, por preferência propría, apenas recomendase a utilização de uma AMI com Kernel Linux, e para uso do Script do User Data que seja derivada do Debian
@@ -32,15 +44,14 @@ No laboratório do projeto foi criada a instância com o tipo t2.micro, nas conf
 
 E para acesso via SSH eu configurei a chave de acesso sendo uma que eu mesmo criei anteriormente, mas pode ser criada uma na hora da criação da instâcia também, para isso clique em criar novo par de chaves, selecione o metodo de criptografia que for melhor para você e escolha o formato .pem, coloque o nome que for mais conveniente para você e clique em criar par de chaves, você terá o registro desse par de chaves e será feito o download do arquivo pem, que deverá ser colocado dentro da pasta .ssh do seu usuario, tendo ela sido criada anteiormente ou não, em caso de não ter sido criada, entre na sua pasta de usuario pessoal com o terminal bash do VScode e digite o comando <mkdir /.ssh> assim será gerada a pasta .ssh no seu arquivo de usuario pessoal
 
-### Criação do Security Group
-
-O Security group deverá ser cridao tendo nas regras de inbound permissões para o acesso via SSH e HTTP apenas para o seu IP. Já na regra de saida (outbound) preferi manter any to any para maior acesso, mas deixo a observação de não seguir o exemplo e buscar ter maior controle das suas regras de saida. OBS: O security group foi criado no momento de criação da instância, mas nada impedia de ter sido criado antes e previamente configurado.
-
 ### Conexão via SSH
 
 A conexão via SSH foi executada via terminal do VScode, pelo fato de ser mais fácil a utilização do terminal bash via VScode. A conexão é feita pelo metodo que a propría AWS fornece, sendo possível até mesmo a conexão via session manager, mas via SSH foi o preferivil por mim. 
 
-Utilizando o comando <ssh -i "minha_chave.pem" ubuntu@ec2-"minha instância"> para conexão via SSH, deixo ressaltado que este comando deve ser executando estando acessada a pasta .ssh do seu computador e ali contendo a chave .pem que foi utilizada na criação da sua instância, trocando "minha_chave" pelo nome da sua chave anexada a instância e "minha instância" pelo id da sua instância, normalmente este comando vem pronto na parte de conexão via SSH na parte de exempo.
+Utilizando o comando <ssh -i "minha_chave.pem" ubuntu@ec2-"minha instância"> para conexão via SSH, deixo ressaltado que este comando deve ser executando estando acessada a pasta .ssh do seu computador e ali contendo a chave .pem que foi utilizada na criação da sua instância, trocando "minha_chave" pelo nome da sua chave anexada a instância e "minha instância" pelo id da sua instância, normalmente este comando vem pronto na parte de conexão via SSH na parte de exemplo.
+
+![Documentação13](https://github.com/user-attachments/assets/ec275e77-0cac-41b7-9005-870ff7c833fb)
+
 
 ### Acessando a Instãncia
 
